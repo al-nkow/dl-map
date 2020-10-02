@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { YMaps, Map, GeolocationControl, Placemark, Circle } from 'react-yandex-maps';
 import styled from 'styled-components';
+import Search from './Search';
 
 const MapWrap = styled.div`
   overflow: hidden;
   border-radius: 3px;
   box-shadow: 0px 1px 10px rgba(0,0,0,0.3);
+  position: relative;
 `;
 
 const TestBtn = styled.div`
@@ -24,19 +26,16 @@ const TestBtn = styled.div`
   }
 `;
 
-
-
-
 const AREA_SIZE = 500;
 
 const DlMap = () => {
-  console.log('++++++++++ RENDER +++++++++++');
 
   // ymaps.coordSystem.geo.getDistance(moscowCoords, newYorkCoords)
 
 
-  let instMap = '';
+  let mapRef = '';
   let entranceRef = '';
+  let pointRef = '';
 
   const [pointCoords, setPointCoords] = useState([]);
   const [entranceCoords, setEntranceCoords] = useState([]);
@@ -48,7 +47,6 @@ const DlMap = () => {
     //   { mapStateAutoApply: true },
     // )
     
-    console.log('MAP LOADED >>>>>', map);
     setYmaps(map);
     // ymaps.coordSystem.geo.getDistance(moscowCoords, newYorkCoords)
 
@@ -59,7 +57,7 @@ const DlMap = () => {
 
 
     // ловим клик по карте
-    // instMap.events.add('click', (e) => {
+    // mapRef.events.add('click', (e) => {
     //   const coords = e.get('coords');
     //   setPointCoords(coords);
     // });
@@ -103,17 +101,13 @@ const DlMap = () => {
     const myZoom = 14;
 
     setPointCoords(myCoords);
-    instMap.setCenter(myCoords, myZoom);
+    mapRef.setCenter(myCoords, myZoom);
   }
 
   const specifyEntrance = () => {
     setShowArea(!showArea);
     if (showArea) setEntranceCoords([]);
   }
-
-
-
-
 
   const mapClick = e => {
     if (!showArea) {
@@ -132,6 +126,16 @@ const DlMap = () => {
     }
   }
 
+  const movePoint = () => {
+    const newCoords = pointRef.geometry.getCoordinates();
+    setPointCoords(newCoords);
+  }
+
+  const circleClick = e => {
+    const coords = e.get('coords');
+    setEntranceCoords(coords);
+  }
+
   return (
     <YMaps query={{ apikey: 'fd1cea5d-2179-4ca3-948a-55b839aa8c79' }}>
       <TestBtn onClick={SetTestCoords}>Установить координаты</TestBtn>
@@ -139,6 +143,7 @@ const DlMap = () => {
       <div>{pointCoords[0]} - {pointCoords[1]} - {showArea ? 'true' : 'false'}</div>
       <div>{entranceCoords[0]} - {entranceCoords[1]}</div>
       <MapWrap>
+        <Search />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
           onLoad={(inst) => onLoadMap(inst)}
@@ -146,27 +151,21 @@ const DlMap = () => {
           width={'100%'}
           height={'500px'}
           defaultState={{ center: [55.75, 37.57], zoom: 9 }}
-          instanceRef={ref => (instMap = ref)}
+          instanceRef={ref => (mapRef = ref)}
         >
           <GeolocationControl options={{ float: 'left' }} />
           {
             pointCoords && pointCoords.length ? (
               <Placemark
                 modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
+                onDragend={movePoint}
                 geometry={pointCoords}
-                options={{ draggable: true }}
+                options={{ draggable: !showArea }}
                 properties={{
                   hintContent: 'Это хинт',
                   balloonContent: 'Это балун'
                 }}
-                instanceRef={ref => {
-                  if (ref) {
-                    ref.events.add('dragend', function(e) {
-                      const newCoords = ref.geometry.getCoordinates();
-                      setPointCoords(newCoords);
-                    });
-                  }
-                }}
+                instanceRef={ref => (pointRef = ref)}
               />
             ) : ''
           }
@@ -174,6 +173,7 @@ const DlMap = () => {
             pointCoords && pointCoords.length && showArea ? (
               <Circle
                 geometry={[pointCoords, AREA_SIZE]}
+                onClick={circleClick}
                 options={{
                   draggable: false,
                   fillColor: '#FFD2D2',
@@ -181,14 +181,6 @@ const DlMap = () => {
                   strokeColor: '#FFD2D2',
                   strokeOpacity: 0.7,
                   strokeWidth: 1,
-                }}
-                instanceRef={ref => {
-                  if (ref) {
-                    ref.events.add('click', function(e) {
-                      const coords = e.get('coords');
-                      setEntranceCoords(coords);
-                    });
-                  }
                 }}
               />
             ) : '' 

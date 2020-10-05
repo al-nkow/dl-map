@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+/*
+Использовать геокодер можно бесплатно, если в сутки к нему, а также к маршрутизатору и панорамам вы делаете суммарно не больше 25 тысяч запросов
+*/
+
+import React, { useState, useEffect } from 'react';
 import { YMaps, Map, GeolocationControl, Placemark, Circle } from 'react-yandex-maps';
 import styled from 'styled-components';
 import Search from './Search';
@@ -11,98 +15,88 @@ const MapWrap = styled.div`
 `;
 
 const TestBtn = styled.div`
+  font-size: 14px;
+  z-index: 2;
+  position: absolute;
+  left: 20px;
+  bottom: 40px;
   cursor: pointer;
   width: 200px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #333333;
+  border: 1px solid #D6D6D6;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
   border-radius: 3px;
-  margin-bottom: 20px;
-  background: #dedede;
+  background: #ffffff;
   &:hover {
-    background: #b9b9b9;
+    background: #f7f7f7;
   }
 `;
 
-const AREA_SIZE = 500;
+const AREA_SIZE = 100;
+const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
 
 const DlMap = () => {
 
-  // ymaps.coordSystem.geo.getDistance(moscowCoords, newYorkCoords)
-
-
-  let mapRef = '';
   let entranceRef = '';
   let pointRef = '';
 
   const [pointCoords, setPointCoords] = useState([]);
   const [entranceCoords, setEntranceCoords] = useState([]);
   const [showArea, setShowArea] = useState(false);
+  const [pointAddress, setPointAddress] = useState('');
+
+  const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
 
-  const onLoadMap = (map) => {
-    // const location = window.ymaps.geolocation.get(
-    //   { mapStateAutoApply: true },
-    // )
-    
-    setYmaps(map);
-    // ymaps.coordSystem.geo.getDistance(moscowCoords, newYorkCoords)
 
-
-
-
-
-
-
-    // ловим клик по карте
-    // mapRef.events.add('click', (e) => {
-    //   const coords = e.get('coords');
-    //   setPointCoords(coords);
-    // });
-
-
-
-
-
-
-
-
-
-    
-    // ymaps.geolocation
-    //   .get({ provider: 'browser', mapStateAutoApply: true })
-    //   .then(result => {
-    //     console.log('GEO RESULT >>>>>>>', result);
-    //     // ymaps.geocode(result.geoObjects.position).then(res => {
-    //     //   let firstGeoObject = res.geoObjects.get(0);
-    //     //   console.log(
-    //     //     firstGeoObject.getLocalities().length
-    //     //       ? firstGeoObject.getLocalities()
-    //     //       : firstGeoObject.getAdministrativeAreas()
-    //     //   );
-    //     // })
-    //   }).catch(e => console.log('XXXXXX >>>>>>>', e));
-
-
-      // Определение геопозиции!!!!
-      // ymaps.geolocation.get({
-      //   mapStateAutoApply: true
-      // })
-      // .then(function(result) {
-      //   console.log('WTF >>>>>', result);
-      // });
+  // !!! ВЫДЕЛИТЬ В ОБЩИЙ ХУК!!!!!!
+  const fetchAddressByCoords = (coords) => {
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}`
+  
+      fetch(url)
+        .then(r => r.json())
+        .then(res => {
+          if (res) {
+            const defaultAddress = 
+              res.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
+            setPointAddress(defaultAddress);
+          }
+        })
+        .catch(e => {
+          console.log('ERROR >>>>>>', e);
+        });
   }
 
 
-  const SetTestCoords = () => {
-    const myCoords = [59.8412181111507, 30.490725064525773];
-    const myZoom = 14;
+  useEffect(() => {
+    if (ymaps && mapRef) {
+      ymaps.geolocation.get({
+        mapStateAutoApply: true
+      })
+      .then(function(result) {
+        if (result) {
+          console.log('>>>>>>>>>', result);
+          const coords = result.geoObjects.position;
+          mapRef.setCenter(coords, 16);
+          setPointCoords(coords);
 
-    setPointCoords(myCoords);
-    mapRef.setCenter(myCoords, myZoom);
-  }
+          fetchAddressByCoords([...coords].reverse().join('+'));
+
+        }
+      });
+    }
+  }, [ymaps, mapRef])
+
+  // const SetTestCoords = () => {
+  //   const myCoords = [59.840921599999994, 30.493900800000002];
+  //   const myZoom = 16;
+
+  //   setPointCoords(myCoords);
+  //   mapRef.setCenter(myCoords, myZoom);
+  // }
 
   const specifyEntrance = () => {
     setShowArea(!showArea);
@@ -129,6 +123,7 @@ const DlMap = () => {
   const movePoint = () => {
     const newCoords = pointRef.geometry.getCoordinates();
     setPointCoords(newCoords);
+    fetchAddressByCoords([...newCoords].reverse().join('+'));
   }
 
   const circleClick = e => {
@@ -136,22 +131,35 @@ const DlMap = () => {
     setEntranceCoords(coords);
   }
 
+  const selectAddress = (item) => {
+    const { address, coords } = item;
+    const coordArr = coords.split(' ').reverse();
+    const zoom = 17;
+    setPointCoords(coordArr);
+    setPointAddress(address);
+    mapRef.setCenter(coordArr, zoom);
+  }
+
   return (
-    <YMaps query={{ apikey: 'fd1cea5d-2179-4ca3-948a-55b839aa8c79' }}>
-      <TestBtn onClick={SetTestCoords}>Установить координаты</TestBtn>
-      <TestBtn onClick={specifyEntrance}>Уточнить подъезд</TestBtn>
-      <div>{pointCoords[0]} - {pointCoords[1]} - {showArea ? 'true' : 'false'}</div>
-      <div>{entranceCoords[0]} - {entranceCoords[1]}</div>
+    <YMaps query={{ apikey: API_KEY_YMAPS }}>
       <MapWrap>
-        <Search />
+        { 
+          pointCoords && pointCoords.length 
+            ? (
+              <TestBtn onClick={specifyEntrance}>
+                { entranceCoords && entranceCoords.length ? 'Скрыть область' : 'Уточнить подъезд' }
+              </TestBtn>
+            ) : ''
+        }
+        <Search selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
-          onLoad={(inst) => onLoadMap(inst)}
+          onLoad={setYmaps}
           onClick={mapClick}
           width={'100%'}
           height={'500px'}
-          defaultState={{ center: [55.75, 37.57], zoom: 9 }}
-          instanceRef={ref => (mapRef = ref)}
+          defaultState={{ center: [55.75, 37.57], zoom: 12 }}
+          instanceRef={setMapRef}
         >
           <GeolocationControl options={{ float: 'left' }} />
           {
@@ -162,8 +170,8 @@ const DlMap = () => {
                 geometry={pointCoords}
                 options={{ draggable: !showArea }}
                 properties={{
-                  hintContent: 'Это хинт',
-                  balloonContent: 'Это балун'
+                  hintContent: pointAddress,
+                  balloonContent: 'Адрес отправления - дополнительная информация'
                 }}
                 instanceRef={ref => (pointRef = ref)}
               />
@@ -197,8 +205,8 @@ const DlMap = () => {
                   iconColor: '#ef2c2c',
                 }}
                 properties={{
-                  hintContent: 'Уточнение подъезда',
-                  balloonContent: 'Это балун подъезда',
+                  hintContent: 'Подъезд',
+                  balloonContent: 'Подъезд - дополнительная информация',
                 }}
                 instanceRef={ref => (entranceRef = ref)}
               />

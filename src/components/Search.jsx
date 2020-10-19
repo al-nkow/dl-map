@@ -4,7 +4,6 @@ import styled from 'styled-components';
 const Wrap = styled.div`
   width: 80%;
   height: 64px;
-  background: #ffffff;
   position: absolute;
   top: 20px;
   left: 50%;
@@ -18,6 +17,7 @@ const InpWrap = styled.div`
   height: 100%;
   border: 1px solid #D6D6D6;
   box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+  background: #ffffff;
   border-radius: 4px;
   overflow: hidden;
 `;
@@ -67,36 +67,39 @@ const Option = styled.div`
 
 const ENTER_KEY_CODE = 13;
 const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
+const GEO_BASE_URL = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=`;
 
-const Search = ({ selectAddress, pointAddress }) => {
+const Search = ({ selectAddress, pointAddress, cdi }) => {
   const [variants, setVariants] = useState([]);
   const [value, setInpValue] = useState('');
 
+  const geoCode = (cdiAddr) => {
+    const valueAddr = cdiAddr || value;
+    const searchAddr = valueAddr.split(' ').join('+');
+    const url = `${GEO_BASE_URL}${searchAddr}`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(res => {
+        if (res) {
+          const geoObjects = res.response.GeoObjectCollection.featureMember;
+          const found = geoObjects.map(item => {
+            return {
+              address: item.GeoObject.metaDataProperty.GeocoderMetaData.text,
+              coords: item.GeoObject.Point.pos,
+            }
+          })
+          setVariants(found);
+        }
+      })
+      .catch(e => {
+        console.log('ERROR >>>>>>', e);
+      });
+  }
+
   const keyPressHandler = e => {
     const {keyCode} = e;
-
-    if (keyCode === ENTER_KEY_CODE) {
-      const searchAddr = value.split(' ').join('+');
-      const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${searchAddr}`
-  
-      fetch(url)
-        .then(r => r.json())
-        .then(res => {
-          if (res) {
-            const geoObjects = res.response.GeoObjectCollection.featureMember;
-            const found = geoObjects.map(item => {
-              return {
-                address: item.GeoObject.metaDataProperty.GeocoderMetaData.text,
-                coords: item.GeoObject.Point.pos,
-              }
-            })
-            setVariants(found);
-          }
-        })
-        .catch(e => {
-          console.log('ERROR >>>>>>', e);
-        });
-    };
+    if (keyCode === ENTER_KEY_CODE) geoCode();
   }
 
   const changeHandler = e => {
@@ -112,6 +115,13 @@ const Search = ({ selectAddress, pointAddress }) => {
   useEffect(() => {
     if (pointAddress) setInpValue(pointAddress);
   }, [pointAddress]);
+
+  useEffect(() => {
+    if (cdi) {
+      setInpValue(cdi);
+      geoCode(cdi);
+    }
+  }, [cdi]);
 
   return (
     <Wrap>

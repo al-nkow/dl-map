@@ -1,9 +1,5 @@
-/*
-Использовать геокодер можно бесплатно, если в сутки к нему, а также к маршрутизатору и панорамам вы делаете суммарно не больше 25 тысяч запросов
-*/
-
 import React, { useState, useEffect } from 'react';
-import { YMaps, Map, GeolocationControl, Placemark, Circle } from 'react-yandex-maps';
+import { YMaps, Map, Polygon, GeolocationControl, ZoomControl, Placemark, Circle } from 'react-yandex-maps';
 import styled from 'styled-components';
 import Search from './Search';
 
@@ -19,7 +15,7 @@ const TestBtn = styled.div`
   z-index: 2;
   position: absolute;
   left: 20px;
-  bottom: 40px;
+  bottom: 20px;
   cursor: pointer;
   width: 200px;
   height: 40px;
@@ -38,7 +34,7 @@ const TestBtn = styled.div`
 const AREA_SIZE = 100;
 const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
 
-const DlMap = () => {
+const DlMap = ({ cdi }) => {
 
   let entranceRef = '';
   let pointRef = '';
@@ -51,8 +47,6 @@ const DlMap = () => {
   const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
 
-
-  // !!! ВЫДЕЛИТЬ В ОБЩИЙ ХУК!!!!!!
   const fetchAddressByCoords = (coords) => {
     const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}`
   
@@ -69,7 +63,6 @@ const DlMap = () => {
           console.log('ERROR >>>>>>', e);
         });
   }
-
 
   useEffect(() => {
     if (ymaps && mapRef) {
@@ -103,10 +96,17 @@ const DlMap = () => {
     if (showArea) setEntranceCoords([]);
   }
 
+  /*
+    сейчас эта функция работает и при клике по карте и при клике по полигону
+    потом когда будут области - надо оставить только клик по полигону и 
+    если клиз вне области - тогда удалять метку!
+  */
   const mapClick = e => {
     if (!showArea) {
       const coords = e.get('coords');
+
       setPointCoords(coords);
+      fetchAddressByCoords([...coords].reverse().join('+'));
     }
   }
 
@@ -137,6 +137,7 @@ const DlMap = () => {
     const zoom = 17;
     setPointCoords(coordArr);
     setPointAddress(address);
+    setEntranceCoords([]);
     mapRef.setCenter(coordArr, zoom);
   }
 
@@ -151,7 +152,7 @@ const DlMap = () => {
               </TestBtn>
             ) : ''
         }
-        <Search selectAddress={selectAddress} pointAddress={pointAddress} />
+        <Search cdi={cdi} selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
           onLoad={setYmaps}
@@ -159,9 +160,11 @@ const DlMap = () => {
           width={'100%'}
           height={'500px'}
           defaultState={{ center: [55.75, 37.57], zoom: 12 }}
+          options={{ suppressMapOpenBlock: true }}
           instanceRef={setMapRef}
         >
-          <GeolocationControl options={{ float: 'left' }} />
+          <ZoomControl />
+          <GeolocationControl />
           {
             pointCoords && pointCoords.length ? (
               <Placemark
@@ -171,7 +174,7 @@ const DlMap = () => {
                 options={{ draggable: !showArea }}
                 properties={{
                   hintContent: pointAddress,
-                  balloonContent: 'Адрес отправления - дополнительная информация'
+                  balloonContent: '<div style="width: 200px;">' + pointAddress + '</div>'
                 }}
                 instanceRef={ref => (pointRef = ref)}
               />
@@ -189,6 +192,7 @@ const DlMap = () => {
                   strokeColor: '#FFD2D2',
                   strokeOpacity: 0.7,
                   strokeWidth: 1,
+                  zIndex: 2,
                 }}
               />
             ) : '' 
@@ -212,6 +216,38 @@ const DlMap = () => {
               />
             ) : ''
           }
+          <Polygon
+            geometry={[
+              [
+                [55.73, 37.54],
+                [55.77, 37.54],
+                [55.77, 37.67],
+                [55.73, 37.66],
+              ],
+              [
+                [59.93727133539923, 30.31255582405088],
+                [59.94011379470408, 30.312341247329694],
+                [59.9406521117351, 30.319036041030863],
+                [59.93724980068361, 30.31950810981749],
+              ],
+              [
+                [59.835406433316464, 30.491914146711682],
+                [59.83938078758292, 30.47989785032497],
+                [59.845946069213966, 30.483245247175553],
+                [59.84663707591772, 30.49749314146265],
+                [59.840158322960896, 30.509166115095464],
+              ]
+            ]}
+            options={{
+              fillColor: '#23629a',
+              // strokeColor: '#000000',
+              opacity: 0.3,
+              // strokeWidth: 1,
+              zIndex: 1,
+              // strokeStyle: 'shortdash',
+            }}
+            onClick={mapClick}
+          />
         </Map>
       </MapWrap>
     </YMaps>

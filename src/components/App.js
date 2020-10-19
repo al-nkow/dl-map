@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DlMap from './DlMap';
+import Page from './Page';
 import styled from 'styled-components';
 
 const Wrap = styled.div`
@@ -9,9 +10,12 @@ const Wrap = styled.div`
 `;
 
 function App() {
+  const [cdiAddress, setCdiAddress] = useState('');
+
   return (
     <Wrap>
-      <DlMap width="100%" />
+      <Page set={setCdiAddress} />
+      <DlMap cdi={cdiAddress} width="100%" />
     </Wrap>
   );
 }

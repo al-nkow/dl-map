@@ -34,7 +34,7 @@ const TestBtn = styled.div`
 const AREA_SIZE = 100;
 const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
 
-const DlMap = ({ cdi }) => {
+const DlMap = ({ cdi, showToast }) => {
 
   let entranceRef = '';
   let pointRef = '';
@@ -102,6 +102,16 @@ const DlMap = ({ cdi }) => {
     если клиз вне области - тогда удалять метку!
   */
   const mapClick = e => {
+    showToast();
+    // if (!showArea) {
+    //   const coords = e.get('coords');
+
+    //   setPointCoords(coords);
+    //   fetchAddressByCoords([...coords].reverse().join('+'));
+    // }
+  }
+
+  const areaClick = e => {
     if (!showArea) {
       const coords = e.get('coords');
 
@@ -246,7 +256,7 @@ const DlMap = ({ cdi }) => {
               zIndex: 1,
               // strokeStyle: 'shortdash',
             }}
-            onClick={mapClick}
+            onClick={areaClick}
           />
         </Map>
       </MapWrap>

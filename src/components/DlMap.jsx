@@ -32,7 +32,7 @@ const TestBtn = styled.div`
 `;
 
 const AREA_SIZE = 100;
-const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
+const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
 
 const DlMap = ({ cdi, showToast }) => {
 

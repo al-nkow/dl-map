@@ -66,7 +66,7 @@ const Option = styled.div`
 `;
 
 const ENTER_KEY_CODE = 13;
-const API_KEY_YMAPS = 'fd1cea5d-2179-4ca3-948a-55b839aa8c79';
+const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
 const GEO_BASE_URL = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=`;
 
 const Search = ({ selectAddress, pointAddress, cdi }) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import UseDebouncedFunc from './UseDebounced';
-import UseCdiService from './useCdiService';
+import UseCdiService from './UseCdiService';
 
 const Wrap = styled.div`
   position: relative;
@@ -74,7 +74,7 @@ const Page = ({ set }) => {
   const { getQuery, getCityStr } = UseCdiService(prevSuggestions, value); 
 
   const fetchAddress = () => {
-    const url = `https://www.dellin.test/api/v1/address/search`;
+    const url = `https://www.dellin.stage/api/v1/address/search`;
     const data = {
       restrict_value: true,
       count: 20,
@@ -147,7 +147,7 @@ const Page = ({ set }) => {
 
   return (
     <Wrap>
-      <SelectBtn onClick={clickSelectButton}>Add</SelectBtn>
+      <SelectBtn onClick={clickSelectButton}>Выбрать</SelectBtn>
       <Inp type="text" onChange={onChangeHandler} value={value} onKeyUp={keyPressHandler} />
       {cdiOptions && (
         <Options>

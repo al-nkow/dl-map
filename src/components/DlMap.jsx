@@ -48,20 +48,21 @@ const DlMap = ({ cdi, showToast }) => {
   const [ymaps, setYmaps] = useState(null);
 
   const fetchAddressByCoords = (coords) => {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}`
+    // &kind=house&results=1 - определяет адрес как ближайший дом
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}&kind=house&results=1`
   
-      fetch(url)
-        .then(r => r.json())
-        .then(res => {
-          if (res) {
-            const defaultAddress = 
-              res.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
-            setPointAddress(defaultAddress);
-          }
-        })
-        .catch(e => {
-          console.log('ERROR >>>>>>', e);
-        });
+    fetch(url)
+      .then(r => r.json())
+      .then(res => {
+        if (res) {
+          const defaultAddress = 
+            res.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
+          setPointAddress(defaultAddress);
+        }
+      })
+      .catch(e => {
+        console.log('ERROR >>>>>>', e);
+      });
   }
 
   useEffect(() => {
@@ -71,7 +72,6 @@ const DlMap = ({ cdi, showToast }) => {
       })
       .then(function(result) {
         if (result) {
-          console.log('>>>>>>>>>', result);
           const coords = result.geoObjects.position;
           mapRef.setCenter(coords, 16);
           setPointCoords(coords);

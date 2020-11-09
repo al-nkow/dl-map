@@ -82,6 +82,9 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
       .then(r => r.json())
       .then(res => {
         if (res) {
+
+          console.log('RES >>>>>>', res);
+
           const geoObjects = res.response.GeoObjectCollection.featureMember;
           const found = geoObjects.map(item => {
             return {
@@ -89,7 +92,12 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
               coords: item.GeoObject.Point.pos,
             }
           })
-          setVariants(found);
+
+          if (found.length === 1) {
+            selectOption(found[0]);
+          } else {
+            setVariants(found);
+          }
         }
       })
       .catch(e => {
@@ -116,6 +124,14 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
     if (pointAddress) setInpValue(pointAddress);
   }, [pointAddress]);
 
+
+
+
+
+
+
+
+
   useEffect(() => {
     if (cdi) {
       setInpValue(cdi);
@@ -123,6 +139,13 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
     }
   }, [cdi]);
 
+
+
+
+
+
+
+  
   return (
     <Wrap>
       <InpWrap>

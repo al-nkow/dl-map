@@ -82,9 +82,6 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
       .then(r => r.json())
       .then(res => {
         if (res) {
-
-          console.log('RES >>>>>>', res);
-
           const geoObjects = res.response.GeoObjectCollection.featureMember;
           const found = geoObjects.map(item => {
             return {

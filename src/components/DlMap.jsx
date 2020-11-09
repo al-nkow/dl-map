@@ -102,16 +102,7 @@ const DlMap = ({ cdi, showToast }) => {
     если клиз вне области - тогда удалять метку!
   */
   const mapClick = e => {
-    showToast();
-    // if (!showArea) {
-    //   const coords = e.get('coords');
-
-    //   setPointCoords(coords);
-    //   fetchAddressByCoords([...coords].reverse().join('+'));
-    // }
-  }
-
-  const areaClick = e => {
+    // showToast();
     if (!showArea) {
       const coords = e.get('coords');
 
@@ -119,6 +110,15 @@ const DlMap = ({ cdi, showToast }) => {
       fetchAddressByCoords([...coords].reverse().join('+'));
     }
   }
+
+  // const areaClick = e => {
+  //   if (!showArea) {
+  //     const coords = e.get('coords');
+
+  //     setPointCoords(coords);
+  //     fetchAddressByCoords([...coords].reverse().join('+'));
+  //   }
+  // }
 
   const moveEntrance = () => {
     const newCoords = entranceRef.geometry.getCoordinates();
@@ -154,14 +154,14 @@ const DlMap = ({ cdi, showToast }) => {
   return (
     <YMaps query={{ apikey: API_KEY_YMAPS }}>
       <MapWrap>
-        { 
+        {/* { 
           pointCoords && pointCoords.length 
             ? (
               <TestBtn onClick={specifyEntrance}>
                 { entranceCoords && entranceCoords.length ? 'Скрыть область' : 'Уточнить подъезд' }
               </TestBtn>
             ) : ''
-        }
+        } */}
         <Search cdi={cdi} selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
@@ -226,7 +226,7 @@ const DlMap = ({ cdi, showToast }) => {
               />
             ) : ''
           }
-          <Polygon
+          {/* <Polygon
             geometry={[
               [
                 [55.73, 37.54],
@@ -257,7 +257,7 @@ const DlMap = ({ cdi, showToast }) => {
               // strokeStyle: 'shortdash',
             }}
             onClick={areaClick}
-          />
+          /> */}
         </Map>
       </MapWrap>
     </YMaps>

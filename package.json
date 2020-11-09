@@ -1,6 +1,6 @@
 {
   "name": "map",
-  "homepag": "http://al-nkow.github.io/dl-map",
+  "homepage": "http://al-nkow.github.io/dl-map",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

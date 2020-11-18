@@ -28,17 +28,24 @@ const DlMap = ({ cdi, showToast }) => {
   const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
 
-  const fetchAddressByCoords = (coords) => {
+  const fetchAddressByCoords = (coords, full) => {
     // &kind=house&results=1 - определяет адрес как ближайший дом
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}&kind=house&results=1`
+    const url =
+      `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}${full ? '' : '&kind=house'}&results=1`
   
     fetch(url)
       .then(r => r.json())
       .then(res => {
-        if (res && res.response) {
+        if (res && 
+          res.response && 
+          res.response.GeoObjectCollection && 
+          res.response.GeoObjectCollection.featureMember &&
+          res.response.GeoObjectCollection.featureMember[0]) {
           const defaultAddress = 
             res.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
           setPointAddress(defaultAddress);
+        } else {
+          fetchAddressByCoords(coords, true)
         }
       })
       .catch(e => console.log('ERROR:', e));

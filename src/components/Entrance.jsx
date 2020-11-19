@@ -50,14 +50,14 @@ const Entrance = ({ pointCoords, ymaps, entranceCoords, setEntranceCoords, showA
 
   return (
     <>
-      { 
+      {/* { 
         pointCoords && pointCoords.length 
           ? (
             <Button onClick={specifyEntrance}>
               { entranceCoords && entranceCoords.length ? 'Скрыть область' : 'Уточнить подъезд' }
             </Button>
           ) : ''
-      }
+      } */}
       {
         pointCoords && pointCoords.length && showArea ? (
           <Circle

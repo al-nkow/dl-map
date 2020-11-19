@@ -25,8 +25,16 @@ const Name = styled.div`
   margin-bottom: 10px;
 `;
 
-const Terminals = ({ selectTerminal, pointCoords }) => {
+const Phone = styled.div`
+  font-weight: bold;
+  margin-top: 5px;
+`;
 
+const Wortable = styled.div`
+  margin-top: 5px;
+`;
+
+const Terminals = ({ selectTerminal, pointCoords }) => {
   const balloonClickHandler = (e) => {
     const element = e.target;
     if (element.classList.contains('select-terminal')) {
@@ -62,6 +70,12 @@ const Terminals = ({ selectTerminal, pointCoords }) => {
                     <b>г. {item.city}</b><br />
                     <Name>Название терминала: {item.name}</Name>
                     {item.terminal.terminalAddress}
+                    {item.show_phones && item.show_phones.length 
+                      ? item.show_phones.map((item, i) => <Phone key={i}>{item}</Phone>)
+                      : ''}
+                    {item.worktables && item.worktables[0] && item.worktables[0].work_hours
+                      ? (<Wortable>Режим работы: <b>{item.worktables[0].work_hours}</b></Wortable>)
+                      : ''}
                     <Button
                       data-address={item.terminal.terminalAddress}
                       data-lat={item.terminal.latitude}

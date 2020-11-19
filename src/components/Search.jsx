@@ -9,6 +9,7 @@ const Wrap = styled.div`
   left: 50%;
   transform: translate(-50%, 0);
   z-index: 2;
+  display: none;
 `;
 
 const InpWrap = styled.div`
@@ -90,11 +91,13 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
             }
           })
 
-          if (found.length === 1) {
-            selectOption(found[0]);
-          } else {
-            setVariants(found);
-          }
+          // Пользуемся теперь полем CDI - потому сразу берем первый вариант!
+          selectOption(found[0]);
+          // if (found.length === 1) {
+          //   selectOption(found[0]);
+          // } else {
+          //   setVariants(found);
+          // }
         }
       })
       .catch(e => {
@@ -121,28 +124,14 @@ const Search = ({ selectAddress, pointAddress, cdi }) => {
     if (pointAddress) setInpValue(pointAddress);
   }, [pointAddress]);
 
-
-
-
-
-
-
-
-
   useEffect(() => {
     if (cdi) {
       setInpValue(cdi);
       geoCode(cdi);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cdi]);
 
-
-
-
-
-
-
-  
   return (
     <Wrap>
       <InpWrap>

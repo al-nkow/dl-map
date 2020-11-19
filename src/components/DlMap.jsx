@@ -5,6 +5,7 @@ import Search from './Search';
 import Terminals from './Terminals';
 import Entrance from './Entrance';
 // import Zones from './Zones';
+import CDIInput from './CDIInput';
 
 const MapWrap = styled.div`
   overflow: hidden;
@@ -15,8 +16,11 @@ const MapWrap = styled.div`
 
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
 
-const DlMap = ({ cdi, showToast }) => {
+const DlMap = ({ showToast }) => {
   let pointRef = '';
+
+  // нужно для установки адреса cdi в поле яндекса
+  const [cdiAddress, setCdiAddress] = useState('');
 
   // Если потребуется вторая точка для уточнения координат подъезда
   const [entranceCoords, setEntranceCoords] = useState([]);
@@ -27,6 +31,7 @@ const DlMap = ({ cdi, showToast }) => {
 
   const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
+  const [isTerminal, setIsTerminal] = useState(false);
 
   const fetchAddressByCoords = (coords, full) => {
     // &kind=house&results=1 - определяет адрес как ближайший дом
@@ -67,9 +72,11 @@ const DlMap = ({ cdi, showToast }) => {
         }
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ymaps, mapRef])
 
   const mapClick = e => {
+    setIsTerminal(false);
     // showToast();
     // Если нужен клик только по области - код ниже надо закомментировать
     if (!showArea) {
@@ -84,6 +91,7 @@ const DlMap = ({ cdi, showToast }) => {
     const newCoords = pointRef.geometry.getCoordinates();
     setPointCoords(newCoords);
     fetchAddressByCoords([...newCoords].reverse().join('+'));
+    setIsTerminal(false);
   }
 
   const selectAddress = (item) => {
@@ -103,6 +111,7 @@ const DlMap = ({ cdi, showToast }) => {
   const selectTerminal = (coords, address) => {
     setPointCoords(coords);
     setPointAddress(address);
+    setIsTerminal(true);
   }
 
   // const SetTestCoords = () => {
@@ -112,10 +121,22 @@ const DlMap = ({ cdi, showToast }) => {
   //   mapRef.setCenter(myCoords, myZoom);
   // }
 
+  // useEffect(() => {
+  //   if (pointAddress)
+  //     console.log('[CDI] >>>>>>', pointAddress, '>>>>>>>>', pointCoords);
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [pointAddress]);
+
   return (
     <YMaps query={{ apikey: API_KEY_YMAPS }}>
+      <CDIInput
+        set={setCdiAddress}
+        yandexResponse={pointAddress}
+        isTerminal={isTerminal}
+        setIsTerminal={setIsTerminal}
+      />
       <MapWrap>
-        <Search cdi={cdi} selectAddress={selectAddress} pointAddress={pointAddress} />
+        <Search cdi={cdiAddress} selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
           onLoad={setYmaps}

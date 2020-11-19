@@ -2,30 +2,31 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import UseDebouncedFunc from './UseDebounced';
 import UseCdiService from './UseCdiService';
+import WarningSvg from '../warning.svg'
 
 const Wrap = styled.div`
   position: relative;
   margin-bottom: 40px;
-  padding-right: 100px;
+  //padding-right: 100px;
 `;
 
-const SelectBtn = styled.div`
-  cursor: pointer;
-  width: 90px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #23629a;
-  color: #ffffff;
-  border-radius: 4px;
-  &:hover {
-    background: #2a73b5;
-  }
-`;
+// const SelectBtn = styled.div`
+//   cursor: pointer;
+//   width: 90px;
+//   position: absolute;
+//   right: 0;
+//   top: 0;
+//   bottom: 0;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   background: #23629a;
+//   color: #ffffff;
+//   border-radius: 4px;
+//   &:hover {
+//     background: #2a73b5;
+//   }
+// `;
 
 const Inp = styled.input`
   box-sizing: border-box;
@@ -62,12 +63,35 @@ const Option = styled.div`
   }
 `;
 
-const Page = ({ set }) => {
+const ErrMesg = styled.div`
+  font-size: 14px;
+  padding-top: 4px;
+  color: #e02626;
+`;
+
+const TerminalMesg = styled.div`
+padding-left: 3px;
+  font-size: 14px;
+  padding-top: 4px;
+  color: #638844;
+  img {
+    margin-top: -2px;
+    display: block;
+    width: 20px;
+    float: left;
+    margin-right: 6px;
+  }
+`;
+
+const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
   const [value, setValue] = useState('');
   const [prevSuggestions, setPrevSuggestions] = useState('');
   const [cdiOptions, setCdiOptions] = useState('');
 
+  const [showError, setShowError] = useState('');
+
   const onChangeHandler = e => {
+    setIsTerminal(false);
     setValue(e.target.value);
   }
 
@@ -133,22 +157,67 @@ const Page = ({ set }) => {
   }
 
   const selectOption = option => {
+    setIsTerminal(false);
     setValue(option.value);
     setCdiOptions('');
+    set(option.value);
   }
 
-  const clickSelectButton = () => {
-    set(value);
-  }
+  // const clickSelectButton = () => {
+  //   set(value);
+  // }
 
   useEffect(() => {
     if (!value) setPrevSuggestions('');
   }, [value])
 
+  useEffect(() => {
+    setShowError('');
+
+    const url = `https://www.dellin.stage/api/v1/address/search`;
+    const data = {
+      restrict_value: true,
+      count: 20,
+      query: yandexResponse, // !!!!
+      locations_boost: [{ kladr_id:"78" }], // ???
+      locations: [{ kladr_id:"78" },{ kladr_id:"78" },{ kladr_id:"47" }], // ???
+      // data: getQuery()
+    };
+
+    fetch(url, {
+      method: 'POST', 
+      body: JSON.stringify(data),
+      mode: 'cors',
+      headers: {
+        'Access-Control-Allow-Origin':'*',
+        'Content-Type': 'application/json;charset=utf-8',
+      }
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.data && res.data[0] && res.data[0].result) {
+          setValue(res.data[0].result);
+          if (!res.data[0].house) {
+            setShowError('Вы указали адрес без номера дома, если все верно - просто продолжайте заполнять форму');
+          }
+        }
+
+      })
+      .catch(e => console.log('ERROR YANDEX-CDI >>>>>>>', e));
+  
+  }, [yandexResponse])
+
   return (
     <Wrap>
-      <SelectBtn onClick={clickSelectButton}>Выбрать</SelectBtn>
+      {/* <SelectBtn onClick={clickSelectButton}>Выбрать</SelectBtn> */}
       <Inp type="text" onChange={onChangeHandler} value={value} onKeyUp={keyPressHandler} />
+      {isTerminal && (
+        <TerminalMesg>
+          <img src={WarningSvg} alt="" />
+          Отправка из терминала
+        </TerminalMesg>
+      )}
+      {showError && <ErrMesg>{showError}</ErrMesg>}
       {cdiOptions && (
         <Options>
           {cdiOptions.map(item => (
@@ -160,4 +229,4 @@ const Page = ({ set }) => {
   );
 }
 
-export default Page;
+export default CDIInput;

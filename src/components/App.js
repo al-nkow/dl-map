@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import DlMap from './DlMap';
-import Page from './Page';
 import styled from 'styled-components';
 
 const Wrap = styled.div`
@@ -37,10 +36,8 @@ const Toast = styled.div`
 `;
 
 function App() {
-  const [cdiAddress, setCdiAddress] = useState('');
   const [toast, setToast] = useState('');
   const ref = useRef(null);
-
 
   useEffect(() => {
     clearTimeout(ref.current);
@@ -59,8 +56,7 @@ function App() {
   return (
     <Wrap>
       {toast && <Toast>Невозможно осуществить доставку в эту точку. Укажите адрес доставки внутри области.</Toast>}
-      <Page set={setCdiAddress} />
-      <DlMap cdi={cdiAddress} width="100%" showToast={showToast} />
+      <DlMap width="100%" showToast={showToast} />
     </Wrap>
   );
 }

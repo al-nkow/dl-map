@@ -16,7 +16,7 @@ const MapWrap = styled.div`
 
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
 
-const DlMap = ({ showToast }) => {
+const DlMap = ({ setToast }) => {
   let pointRef = '';
 
   // нужно для установки адреса cdi в поле яндекса
@@ -77,7 +77,7 @@ const DlMap = ({ showToast }) => {
 
   const mapClick = e => {
     setIsTerminal(false);
-    // showToast();
+    // setToast('Невозможно осуществить доставку в эту точку. Укажите адрес доставки внутри области.');
     // Если нужен клик только по области - код ниже надо закомментировать
     if (!showArea) {
       const coords = e.get('coords');
@@ -134,6 +134,7 @@ const DlMap = ({ showToast }) => {
         yandexResponse={pointAddress}
         isTerminal={isTerminal}
         setIsTerminal={setIsTerminal}
+        setToast={setToast}
       />
       <MapWrap>
         <Search cdi={cdiAddress} selectAddress={selectAddress} pointAddress={pointAddress} />

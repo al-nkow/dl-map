@@ -4,6 +4,9 @@ import UseDebouncedFunc from './UseDebounced';
 import UseCdiService from './UseCdiService';
 import WarningSvg from '../warning.svg'
 
+import cities from '../cities.json';
+const citiesArr = cities.cities.map(c => c.city);
+
 const Wrap = styled.div`
   position: relative;
   margin-bottom: 40px;
@@ -83,7 +86,7 @@ padding-left: 3px;
   }
 `;
 
-const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
+const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) => {
   const [value, setValue] = useState('');
   const [prevSuggestions, setPrevSuggestions] = useState('');
   const [cdiOptions, setCdiOptions] = useState('');
@@ -103,8 +106,8 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
       restrict_value: true,
       count: 20,
       query: value,
-      locations_boost: [{ kladr_id:"78" }], // ???
-      locations: [{ kladr_id:"78" },{ kladr_id:"78" },{ kladr_id:"47" }], // ???
+      // locations_boost: [{ kladr_id:"78" }], // ???
+      // locations: [{ kladr_id:"78" },{ kladr_id:"78" },{ kladr_id:"47" }], // ???
       data: getQuery()
     };
 
@@ -123,6 +126,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
           if (!i.value) i.value = getCityStr(i);
           return i;
         });
+
         setCdiOptions(adresses);
 
         const kladrList = {};
@@ -157,6 +161,8 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
   }
 
   const selectOption = option => {
+    if (!citiesArr.includes(option.city)) setToast('Отправка из этого города не осуществляется!');
+
     setIsTerminal(false);
     setValue(option.value);
     setCdiOptions('');
@@ -197,6 +203,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal }) => {
       .then(res => {
         if (res && res.data && res.data[0] && res.data[0].result) {
           setValue(res.data[0].result);
+          if (!citiesArr.includes(res.data[0].city)) setToast('Отправка из этого города не осуществляется!');
           if (!res.data[0].house) {
             setShowError('Вы указали адрес без номера дома, если все верно - просто продолжайте заполнять форму');
           }

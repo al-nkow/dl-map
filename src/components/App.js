@@ -49,14 +49,10 @@ function App() {
     }
   }, [toast]);
 
-  const showToast = () => {
-    setToast(true);
-  }
-
   return (
     <Wrap>
-      {toast && <Toast>Невозможно осуществить доставку в эту точку. Укажите адрес доставки внутри области.</Toast>}
-      <DlMap width="100%" showToast={showToast} />
+      {toast && <Toast>{toast}</Toast>}
+      <DlMap width="100%" setToast={setToast} />
     </Wrap>
   );
 }

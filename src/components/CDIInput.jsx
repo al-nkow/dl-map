@@ -161,7 +161,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
   }
 
   const selectOption = option => {
-    if (!citiesArr.includes(option.city)) setToast('Отправка из этого города не осуществляется!');
+    // if (!citiesArr.includes(option.city)) setToast('Отправка из этого города не осуществляется!');
 
     setIsTerminal(false);
     setValue(option.value);

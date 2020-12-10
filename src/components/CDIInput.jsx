@@ -203,7 +203,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
       .then(res => {
         if (res && res.data && res.data[0] && res.data[0].result) {
           setValue(res.data[0].result);
-          if (!citiesArr.includes(res.data[0].city)) setToast('Отправка из этого города не осуществляется!');
+          // if (!citiesArr.includes(res.data[0].city)) setToast('Отправка из этого города не осуществляется!');
           if (!res.data[0].house) {
             setShowError('Вы указали адрес без номера дома, если все верно - просто продолжайте заполнять форму');
           }

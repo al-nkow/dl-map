@@ -100,6 +100,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
 
   const { getQuery, getCityStr } = UseCdiService(prevSuggestions, value); 
 
+  // Получение OPTIONS во время ввода в строку поиска
   const fetchAddress = () => {
     if (!value) {
       setCdiOptions('');
@@ -167,11 +168,11 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
 
   const selectOption = option => {
     // if (!citiesArr.includes(option.city)) setToast('Отправка из этого города не осуществляется!');
-
+    const val = option.source || option.result || option.value;
     setIsTerminal(false);
-    setValue(option.value);
+    setValue(val);
     setCdiOptions('');
-    set(option.value);
+    set(val);
   }
 
   // const clickSelectButton = () => {
@@ -190,8 +191,8 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
       restrict_value: true,
       count: 20,
       query: yandexResponse, // !!!!
-      locations_boost: [{ kladr_id:"78" }], // ???
-      locations: [{ kladr_id:"78" },{ kladr_id:"78" },{ kladr_id:"47" }], // ???
+      // locations_boost: [{ kladr_id:"78" }], // ???
+      // locations: [{ kladr_id:"78" },{ kladr_id:"78" },{ kladr_id:"47" }], // ???
       // data: getQuery()
     };
 
@@ -206,8 +207,8 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
     })
       .then(r => r.json())
       .then(res => {
-        if (res && res.data && res.data[0] && res.data[0].result) {
-          setValue(res.data[0].result);
+        if (res && res.data && res.data[0]) {
+          setValue(res.data[0].source || res.data[0].result || res.data[0].value);
           // if (!citiesArr.includes(res.data[0].city)) setToast('Отправка из этого города не осуществляется!');
           if (!res.data[0].house) {
             setShowError('Вы указали адрес без номера дома, если все верно - просто продолжайте заполнять форму');

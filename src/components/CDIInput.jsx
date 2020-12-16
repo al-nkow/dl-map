@@ -101,6 +101,11 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
   const { getQuery, getCityStr } = UseCdiService(prevSuggestions, value); 
 
   const fetchAddress = () => {
+    if (!value) {
+      setCdiOptions('');
+      return false;
+    }
+
     const url = `https://www.dellin.stage/api/v1/address/search`;
     const data = {
       restrict_value: true,
@@ -150,7 +155,7 @@ const CDIInput = ({ set, yandexResponse, isTerminal, setIsTerminal, setToast }) 
 
   const debouncedFetchAddress = UseDebouncedFunc(fetchAddress, 300);
 
-  const keyPressHandler = () => {
+  const keyPressHandler = (e) => {
     // const isSpb = true;
     // const cityIsInRussia = true;
     // const code = pointStorageVal.code;

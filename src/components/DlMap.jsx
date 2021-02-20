@@ -14,6 +14,42 @@ const MapWrap = styled.div`
   position: relative;
 `;
 
+
+
+
+
+
+
+// const InputWrap = styled.div`
+//   position: relative;
+//   margin-bottom: 40px;
+// `;
+// const Input = styled.input`
+//   padding: 10px;
+//   border: 1px solid #D6D6D6;
+//   border-radius: 4px;
+//   box-shadow: none;
+//   margin-bottom: 10px;
+// `;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
 
 const DlMap = ({ setToast }) => {
@@ -94,6 +130,21 @@ const DlMap = ({ setToast }) => {
     setIsTerminal(false);
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const selectAddress = (item) => {
     const { address, coords } = item;
     const coordArr = coords.split(' ').reverse();
@@ -104,6 +155,23 @@ const DlMap = ({ setToast }) => {
     mapRef.setCenter(coordArr, zoom);
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
   useEffect(() => {
     if (pointCoords && mapRef) mapRef.balloon.close();
   }, [pointCoords, mapRef]);
@@ -136,6 +204,17 @@ const DlMap = ({ setToast }) => {
         setIsTerminal={setIsTerminal}
         setToast={setToast}
       />
+
+
+
+
+      {/* <Input type="text" /> */}
+
+
+
+
+
+
       <MapWrap>
         <Search cdi={cdiAddress} selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map

@@ -62,6 +62,7 @@ const Terminals = ({ selectTerminal, pointCoords }) => {
           {
             !terminalSelected(item) ? (<Placemark
               key={item.id}
+              modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
               geometry={[item.terminal.latitude, item.terminal.longitude]}
               properties={{
                 hintContent: `${item.city} ${item.address}`,

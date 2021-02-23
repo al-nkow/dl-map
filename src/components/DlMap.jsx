@@ -98,6 +98,7 @@ const DlMap = ({ setToast }) => {
 
   const fetchAddress = (val, options) => {
     setShowError('');
+    setIsTerminal(false);
     return fetch(`${API_ADDRESSATOR}/?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}`)
       .then(r => r.json())
   }
@@ -160,10 +161,6 @@ const DlMap = ({ setToast }) => {
   }
 
   const selectTerminal = (coords, address) => {
-
-
-    console.log('SELECT TERMINAL >>>>>>', coords, address);
-
     setValue(address);
     setIsTerminal(true);
     setPointCoords(coords);
@@ -201,14 +198,14 @@ const DlMap = ({ setToast }) => {
   return (
     <YMaps query={{ apikey: API_KEY_YMAPS }}>
       <InpWrap>
-        <Input onChange={onChangeHandler} value={value} type="text" placeholder="addressator" />
+        <Input onChange={onChangeHandler} value={value} type="text" placeholder="Адрес" />
         {isTerminal && (
           <TerminalMesg>
             <img src={WarningSvg} alt="" />
             Отправка из терминала
           </TerminalMesg>
         )}
-        {showError && <ErrMesg>{showError}</ErrMesg>}
+        {!isTerminal && showError && <ErrMesg>{showError}</ErrMesg>}
         {options && (
           <Options>
             {options.map(item => (

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { YMaps, Map, GeolocationControl, ZoomControl, Placemark } from 'react-yandex-maps';
 import styled from 'styled-components';
-import Search from './Search';
 import Terminals from './Terminals';
-import Entrance from './Entrance';
-// import Zones from './Zones';
-import CDIInput from './CDIInput';
+import UseDebouncedFunc from './UseDebounced';
+import WarningSvg from '../warning.svg'
 
 const MapWrap = styled.div`
   overflow: hidden;
@@ -14,48 +12,165 @@ const MapWrap = styled.div`
   position: relative;
 `;
 
+const InpWrap = styled.div`
+  position: relative;
+  margin-bottom: 40px;
+`;
+
+const Input = styled.input`
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #D6D6D6;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  outline: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: transparent;
+`;
+
+const Options = styled.div`
+  overflow-y: auto;
+  max-height: 200px;
+  top: 100%;
+  left: 5px;
+  right: 5px;
+  background: #ffffff;
+  position: absolute;
+  z-index: 3;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+  margin-top: 10px;
+  border-radius: 2px;
+`;
+
+const Option = styled.div`
+  padding: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  &:hover {
+    background: #f7f7f7;
+  }
+`;
+
+const TerminalMesg = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  right: 10px;
+  padding-left: 3px;
+  font-size: 14px;
+  padding-top: 4px;
+  color: #638844;
+  img {
+    margin-top: -2px;
+    display: block;
+    width: 20px;
+    float: left;
+    margin-right: 6px;
+  }
+`;
+
+const ErrMesg = styled.div`
+  font-size: 14px;
+  padding-top: 4px;
+  color: #e02626;
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  right: 10px;
+`;
+
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
+const API_ADDRESSATOR = 'https://www.dellin.stage/api/v2/address/';
 
 const DlMap = ({ setToast }) => {
-  let pointRef = '';
-
-  // нужно для установки адреса cdi в поле яндекса
-  const [cdiAddress, setCdiAddress] = useState('');
-
-  // Если потребуется вторая точка для уточнения координат подъезда
-  const [entranceCoords, setEntranceCoords] = useState([]);
-  const [showArea, setShowArea] = useState(false);
-
   const [pointCoords, setPointCoords] = useState([]);
   const [pointAddress, setPointAddress] = useState('');
 
   const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
+  const [pointRef, setPointRef] = useState(null);
   const [isTerminal, setIsTerminal] = useState(false);
 
-  const fetchAddressByCoords = (coords, full) => {
-    // &kind=house&results=1 - определяет адрес как ближайший дом
-    const url =
-      `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY_YMAPS}&format=json&geocode=${coords}${full ? '' : '&kind=house'}&results=1`
-  
-    fetch(url)
+  const [value, setValue] = useState('');
+  const [options, setOptions] = useState(null);
+  const [showError, setShowError] = useState('');
+
+  const fetchAddress = (val, options) => {
+    setShowError('');
+    return fetch(`${API_ADDRESSATOR}/?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}`)
       .then(r => r.json())
-      .then(res => {
-        if (res && 
-          res.response && 
-          res.response.GeoObjectCollection && 
-          res.response.GeoObjectCollection.featureMember &&
-          res.response.GeoObjectCollection.featureMember[0]) {
-          const defaultAddress = 
-            res.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
-          setPointAddress(defaultAddress);
-        } else {
-          fetchAddressByCoords(coords, true)
-        }
-      })
-      .catch(e => console.log('ERROR:', e));
   }
 
+  const checkAddress = (res) => {
+    const hasHouse = res.data[0].property.components.find(i => i.type === 'д');
+    if (!hasHouse) setShowError('Не указан номер дома!');
+  }
+
+  const mapClick = e => setPoint(e.get('coords'));
+
+  const movePoint = () => setPoint(pointRef.geometry.getCoordinates());
+
+  const debouncedFetchAddress = UseDebouncedFunc((val) => {
+    fetchAddress(val).then(res => {
+      if (res && res.data) setOptions(res.data);
+    }).catch(err => console.log('ERROR: ', err));
+  }, 300);
+
+  const onChangeHandler = (e) => {
+    const val = e.target.value;
+    setValue(val);
+    if (val) debouncedFetchAddress(val);
+  }
+
+  const selectOption = (opt) => {
+    setValue(opt.result);
+    setOptions(null);
+    if (opt.books[0] === 'cdi_clean') {
+      fetchAddress(opt.result, '&fields=point')
+        .then(res => {
+          if (res && res.data) {
+            const coords = res.data[0].point.split(',');
+            const address = opt.result;
+
+            setPointCoords(coords);
+            setPointAddress(address);
+            mapRef.setCenter(coords, 17);
+
+            checkAddress(res);
+          }
+        })
+        .catch(err => console.log('ERROR: ', err));
+    }
+  }
+
+  const setPoint = coords => {
+    setIsTerminal(false);
+    setPointCoords(coords);
+
+    fetchAddress(coords)
+      .then(res => {
+        if (res && res.data) {
+          setValue(res.data[0].result);
+          setPointAddress(res.data[0].result);
+          checkAddress(res);
+        }
+      })
+      .catch(err => console.log('ERROR: ', err));
+  }
+
+  const selectTerminal = (coords, address) => {
+
+
+    console.log('SELECT TERMINAL >>>>>>', coords, address);
+
+    setValue(address);
+    setIsTerminal(true);
+    setPointCoords(coords);
+    setPointAddress(address);
+  }
+
+  // Initial Postion bases on geolocation
   useEffect(() => {
     if (ymaps && mapRef) {
       ymaps.geolocation.get({
@@ -66,78 +181,43 @@ const DlMap = ({ setToast }) => {
           const coords = result.geoObjects.position;
           mapRef.setCenter(coords, 16);
           setPointCoords(coords);
-
-          fetchAddressByCoords([...coords].reverse().join('+'));
-
+          fetchAddress(coords)
+            .then(res => {
+              if (res && res.data) {
+                setValue(res.data[0].result);
+                setPointAddress(res.data[0].result);
+              }
+            })
+            .catch(err => console.log('ERROR: ', err));
         }
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ymaps, mapRef])
-
-  const mapClick = e => {
-    setIsTerminal(false);
-    // setToast('Невозможно осуществить доставку в эту точку. Укажите адрес доставки внутри области.');
-    // Если нужен клик только по области - код ниже надо закомментировать
-    if (!showArea) {
-      const coords = e.get('coords');
-
-      setPointCoords(coords);
-      fetchAddressByCoords([...coords].reverse().join('+'));
-    }
-  }
-
-  const movePoint = () => {
-    const newCoords = pointRef.geometry.getCoordinates();
-    setPointCoords(newCoords);
-    fetchAddressByCoords([...newCoords].reverse().join('+'));
-    setIsTerminal(false);
-  }
-
-  const selectAddress = (item) => {
-    const { address, coords } = item;
-    const coordArr = coords.split(' ').reverse();
-    const zoom = 17;
-    setPointCoords(coordArr);
-    setPointAddress(address);
-    setEntranceCoords([]);
-    mapRef.setCenter(coordArr, zoom);
-  }
 
   useEffect(() => {
     if (pointCoords && mapRef) mapRef.balloon.close();
   }, [pointCoords, mapRef]);
 
-  const selectTerminal = (coords, address) => {
-    setPointCoords(coords);
-    setPointAddress(address);
-    setIsTerminal(true);
-  }
-
-  // const SetTestCoords = () => {
-  //   const myCoords = [59.840921599999994, 30.493900800000002];
-  //   const myZoom = 16;
-  //   setPointCoords(myCoords);
-  //   mapRef.setCenter(myCoords, myZoom);
-  // }
-
-  // useEffect(() => {
-  //   if (pointAddress)
-  //     console.log('[CDI] >>>>>>', pointAddress, '>>>>>>>>', pointCoords);
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [pointAddress]);
-
   return (
     <YMaps query={{ apikey: API_KEY_YMAPS }}>
-      <CDIInput
-        set={setCdiAddress}
-        yandexResponse={pointAddress}
-        isTerminal={isTerminal}
-        setIsTerminal={setIsTerminal}
-        setToast={setToast}
-      />
+      <InpWrap>
+        <Input onChange={onChangeHandler} value={value} type="text" placeholder="addressator" />
+        {isTerminal && (
+          <TerminalMesg>
+            <img src={WarningSvg} alt="" />
+            Отправка из терминала
+          </TerminalMesg>
+        )}
+        {showError && <ErrMesg>{showError}</ErrMesg>}
+        {options && (
+          <Options>
+            {options.map(item => (
+              <Option onClick={() => selectOption(item)} key={item.property.kladr_id}>{item.result}</Option>
+            ))}
+          </Options>
+        )}
+      </InpWrap>
       <MapWrap>
-        <Search cdi={cdiAddress} selectAddress={selectAddress} pointAddress={pointAddress} />
         <Map
           modules={['geolocation', 'geocode', 'coordSystem.geo']}
           onLoad={setYmaps}
@@ -154,28 +234,15 @@ const DlMap = ({ setToast }) => {
                 modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
                 onDragend={movePoint}
                 geometry={pointCoords}
-                options={{ draggable: !showArea }}
+                options={{ draggable: true }}
                 properties={{
                   hintContent: pointAddress,
                   balloonContent: '<div style="width: 200px;">' + pointAddress + '</div>'
                 }}
-                instanceRef={ref => (pointRef = ref)}
+                instanceRef={setPointRef}
               />
             ) : ''
           }
-          <Entrance
-            entranceCoords={entranceCoords}
-            setEntranceCoords={setEntranceCoords}
-            pointCoords={pointCoords}
-            showArea={showArea}
-            setShowArea={setShowArea}
-            ymaps={ymaps}
-          />
-          {/* <Zones
-            showArea={showArea}
-            setPointCoords={setPointCoords}
-            fetchAddressByCoords={fetchAddressByCoords}
-          /> */}
           <Terminals selectTerminal={selectTerminal} pointCoords={pointCoords} />
           <ZoomControl />
           <GeolocationControl />

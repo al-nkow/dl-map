@@ -37,15 +37,15 @@ const Wortable = styled.div`
 const Terminals = ({ selectTerminal, pointCoords }) => {
   const balloonClickHandler = (e) => {
     const element = e.target;
+
     if (element.classList.contains('select-terminal')) {
       const { lat, lon, address } = element.dataset;
       selectTerminal([lat, lon], address);
     }
   }
 
-  const terminalIsNotSelected = item => {
-    if (!pointCoords) return true;
-    return +pointCoords[0] !== item.terminal.latitude && +pointCoords[1] !== item.terminal.longitude;
+  const terminalSelected = item => {
+    return pointCoords && +pointCoords[0] === item.terminal.latitude && +pointCoords[1] === item.terminal.longitude;
   }
 
   useEffect(() => {
@@ -57,10 +57,10 @@ const Terminals = ({ selectTerminal, pointCoords }) => {
 
   return (
     <>{
-      terminals.map((item, index) => (
+      terminals.map((item) => (
         <Fragment key={item.id}>
           {
-            terminalIsNotSelected(item) ? (<Placemark
+            !terminalSelected(item) ? (<Placemark
               key={item.id}
               geometry={[item.terminal.latitude, item.terminal.longitude]}
               properties={{

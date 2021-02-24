@@ -47,6 +47,7 @@ const Option = styled.div`
   padding: 5px;
   font-size: 14px;
   cursor: pointer;
+  ${({ manual }) => (manual ? 'color: green;' : '')}
   &:hover {
     background: #f7f7f7;
   }
@@ -87,6 +88,7 @@ const DlMap = ({ setToast }) => {
   const [pointCoords, setPointCoords] = useState([]);
   const [pointAddress, setPointAddress] = useState('');
 
+  const [manulaInp, setManualInp] = useState(false);
   const [mapRef, setMapRef] = useState(null);
   const [ymaps, setYmaps] = useState(null);
   const [pointRef, setPointRef] = useState(null);
@@ -114,7 +116,13 @@ const DlMap = ({ setToast }) => {
 
   const debouncedFetchAddress = UseDebouncedFunc((val) => {
     fetchAddress(val).then(res => {
-      if (res && res.data) setOptions(res.data);
+      if (res && res.data) {
+        const opts = [...res.data];
+        if (res.data[0] && res.data[0].books.includes('cdi_clean')) {
+          opts.push({ result: 'Нет в списке', property: { kladr_id: 'manualInp' } })
+        }
+        setOptions(opts);
+      }
     }).catch(err => console.log('ERROR: ', err));
   }, 300);
 
@@ -125,9 +133,15 @@ const DlMap = ({ setToast }) => {
   }
 
   const selectOption = (opt) => {
+    if (opt.property.kladr_id === 'manualInp') {
+      setManualInp(true);
+      setOptions(null);
+      return;
+    }
+    
     setValue(opt.result);
     setOptions(null);
-    if (opt.books[0] === 'cdi_clean') {
+    if (opt.books.includes('cdi_clean')) {
       fetchAddress(opt.result, '&fields=point')
         .then(res => {
           if (res && res.data) {
@@ -195,6 +209,10 @@ const DlMap = ({ setToast }) => {
     if (pointCoords && mapRef) mapRef.balloon.close();
   }, [pointCoords, mapRef]);
 
+  useEffect(() => {
+    setManualInp(false);
+  }, [value]);
+
   return (
     <YMaps query={{ apikey: API_KEY_YMAPS }}>
       <InpWrap>
@@ -209,7 +227,13 @@ const DlMap = ({ setToast }) => {
         {options && (
           <Options>
             {options.map(item => (
-              <Option onClick={() => selectOption(item)} key={item.property.kladr_id}>{item.result}</Option>
+              <Option
+                key={item.property.kladr_id}
+                onClick={() => selectOption(item)}
+                manual={item.property.kladr_id === 'manualInp'}
+              >
+                {item.result}
+              </Option>
             ))}
           </Options>
         )}
@@ -226,7 +250,7 @@ const DlMap = ({ setToast }) => {
           instanceRef={setMapRef}
         >
           {
-            pointCoords && pointCoords.length ? (
+            !manulaInp && pointCoords && pointCoords.length ? (
               <Placemark
                 modules={['geoObject.addon.balloon', 'geoObject.addon.hint']}
                 onDragend={movePoint}

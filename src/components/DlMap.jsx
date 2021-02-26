@@ -118,7 +118,7 @@ const DlMap = ({ setToast }) => {
     fetchAddress(val).then(res => {
       if (res && res.data) {
         const opts = [...res.data];
-        if (res.data[0] && res.data[0].books.includes('cdi_clean')) {
+        if ((res.data[0] && res.data[0].books.includes('cdi_clean')) || !res.data.length) {
           opts.push({ result: 'Нет в списке', property: { kladr_id: 'manualInp' } })
         }
         setOptions(opts);

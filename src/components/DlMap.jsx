@@ -82,7 +82,7 @@ const ErrMesg = styled.div`
 `;
 
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
-const API_ADDRESSATOR = 'https://www.dellin.stage/api/v2/address/';
+const API_ADDRESSATOR = process.env.NODE_ENV === 'development' ? '/api/v2/address' : 'https://www.dellin.stage/api/v2/address';
 
 const DlMap = ({ setToast }) => {
   const [pointCoords, setPointCoords] = useState([]);
@@ -166,8 +166,9 @@ const DlMap = ({ setToast }) => {
     fetchAddress(coords)
       .then(res => {
         if (res && res.data) {
-          setValue(res.data[0].result);
-          setPointAddress(res.data[0].result);
+          const addr = Array.isArray(res.data) ? res.data[0].result : res.data.result;
+          setValue(addr);
+          setPointAddress(addr);
           checkAddress(res);
         }
       })

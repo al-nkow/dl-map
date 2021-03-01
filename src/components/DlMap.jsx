@@ -166,9 +166,8 @@ const DlMap = ({ setToast }) => {
     fetchAddress(coords)
       .then(res => {
         if (res && res.data) {
-          const addr = Array.isArray(res.data) ? res.data[0].result : res.data.result;
-          setValue(addr);
-          setPointAddress(addr);
+          setValue(res.data[0].result);
+          setPointAddress(res.data[0].result);
           checkAddress(res);
         }
       })

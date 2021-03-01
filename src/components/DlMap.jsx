@@ -82,7 +82,8 @@ const ErrMesg = styled.div`
 `;
 
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
-const API_ADDRESSATOR = process.env.NODE_ENV === 'development' ? '/api/v2/address' : 'https://www.dellin.stage/api/v2/address';
+const BASE_URL = process.env.NODE_ENV === 'development' ? '' : 'https://www.dellin.stage';
+const API_ADDRESSATOR = `${BASE_URL}/api/v2/address/`;
 
 const DlMap = ({ setToast }) => {
   const [pointCoords, setPointCoords] = useState([]);
@@ -101,12 +102,12 @@ const DlMap = ({ setToast }) => {
   const fetchAddress = (val, options) => {
     setShowError('');
     setIsTerminal(false);
-    return fetch(`${API_ADDRESSATOR}/?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}`)
+    return fetch(`${API_ADDRESSATOR}?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}`)
       .then(r => r.json())
   }
 
   const checkAddress = (res) => {
-    const hasHouse = res.data[0].property.components.find(i => i.type === 'д');
+    const hasHouse = res.data[0].property.components.find(i => i.kind === 'house');
     if (!hasHouse) setShowError('Не указан номер дома!');
   }
 

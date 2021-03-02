@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { YMaps, Map, GeolocationControl, ZoomControl, Placemark } from 'react-yandex-maps';
 import styled from 'styled-components';
 import Terminals from './Terminals';
 import UseDebouncedFunc from './UseDebounced';
-import WarningSvg from '../warning.svg'
+import { ReactComponent as Warning } from '../warning.svg'
 
 const MapWrap = styled.div`
   overflow: hidden;
@@ -62,7 +62,7 @@ const TerminalMesg = styled.div`
   font-size: 14px;
   padding-top: 4px;
   color: #638844;
-  img {
+  svg {
     margin-top: -2px;
     display: block;
     width: 20px;
@@ -72,13 +72,25 @@ const TerminalMesg = styled.div`
 `;
 
 const ErrMesg = styled.div`
+  border-radius: 2px;
+  margin-top: 5px;
+  padding: 5px 10px;
   font-size: 14px;
-  padding-top: 4px;
-  color: #e02626;
+  background: #e02626;
+  color: #ffffff;
   position: absolute;
   top: 100%;
   left: 10px;
-  right: 10px;
+  svg {
+    margin-top: -2px;
+    display: block;
+    width: 20px;
+    float: left;
+    margin-right: 6px;
+    path {
+      fill: #ffffff;
+    }
+  }
 `;
 
 const API_KEY_YMAPS = process.env.REACT_APP_MAP_API_KEY;
@@ -86,6 +98,8 @@ const BASE_URL = process.env.NODE_ENV === 'development' ? '' : 'https://www.dell
 const API_ADDRESSATOR = `${BASE_URL}/api/v2/address/`;
 
 const DlMap = ({ setToast }) => {
+  const browserGeo = useRef('');
+
   const [pointCoords, setPointCoords] = useState([]);
   const [pointAddress, setPointAddress] = useState('');
 
@@ -102,13 +116,24 @@ const DlMap = ({ setToast }) => {
   const fetchAddress = (val, options) => {
     setShowError('');
     setIsTerminal(false);
-    return fetch(`${API_ADDRESSATOR}?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}`)
+    return fetch(`${API_ADDRESSATOR}?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}${browserGeo.current}`)
       .then(r => r.json())
   }
 
   const checkAddress = (res) => {
     const hasHouse = res.data[0].property.components.find(i => i.kind === 'house');
-    if (!hasHouse) setShowError('Не указан номер дома!');
+    const invalid = res.data[0].property.validity === 'UNOFFICIAL_SOURCE' || res.data[0].property.validity === 'VALIDATED_HAS_UNPARSED_PARTS';
+
+    // VALIDATED_HAS_UNPARSED_PARTS
+    // VALIDATED
+    // UNOFFICIAL_SOURCE
+    // console.log('RES >>>>>>>>>', res.data[0]);
+    
+    if (invalid) {
+      setShowError('Требуется уточнение цены перевозки!');
+    } else if (!hasHouse) {
+      setShowError('Не указан номер дома!');
+    }
   }
 
   const mapClick = e => setPoint(e.get('coords'));
@@ -191,6 +216,7 @@ const DlMap = ({ setToast }) => {
       .then(function(result) {
         if (result) {
           const coords = result.geoObjects.position;
+          browserGeo.current = `&location_priority=${coords.join(',')}`;
           mapRef.setCenter(coords, 16);
           setPointCoords(coords);
           fetchAddress(coords)
@@ -220,11 +246,16 @@ const DlMap = ({ setToast }) => {
         <Input onChange={onChangeHandler} value={value} type="text" placeholder="Адрес" />
         {isTerminal && (
           <TerminalMesg>
-            <img src={WarningSvg} alt="" />
+            <Warning />
             Отправка из терминала
           </TerminalMesg>
         )}
-        {!isTerminal && showError && <ErrMesg>{showError}</ErrMesg>}
+        {!isTerminal && showError && (
+          <ErrMesg>
+            <Warning />
+            {showError}
+          </ErrMesg>
+        )}
         {options && (
           <Options>
             {options.map(item => (

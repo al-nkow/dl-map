@@ -113,26 +113,24 @@ const DlMap = ({ setToast }) => {
   const [options, setOptions] = useState(null);
   const [showError, setShowError] = useState('');
 
-  const fetchAddress = (val, options) => {
+  const fetchAddress = (val, options, clean) => {
     setShowError('');
     setIsTerminal(false);
-    return fetch(`${API_ADDRESSATOR}?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}${browserGeo.current}`)
+    return fetch(`${API_ADDRESSATOR}?query=${Array.isArray(val) ? val.join(',') : val}${options || ''}${!clean ? browserGeo.current : ''}`)
       .then(r => r.json())
   }
 
   const checkAddress = (res) => {
+    const hasCity = res.data[0].property.components.find(i => i.kind === 'city');
     const hasHouse = res.data[0].property.components.find(i => i.kind === 'house');
     const invalid = res.data[0].property.validity === 'UNOFFICIAL_SOURCE' || res.data[0].property.validity === 'VALIDATED_HAS_UNPARSED_PARTS';
-
-    // VALIDATED_HAS_UNPARSED_PARTS
-    // VALIDATED
-    // UNOFFICIAL_SOURCE
-    // console.log('RES >>>>>>>>>', res.data[0]);
     
-    if (invalid) {
-      setShowError('Требуется уточнение цены перевозки!');
+    if (invalid && hasCity) {
+      setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
+    } else if (invalid && !hasCity) {
+      setShowError('Требуется уточнение возможности перевозки и цены');
     } else if (!hasHouse) {
-      setShowError('Не указан номер дома!');
+      setShowError('Не указан номер дома');
     }
   }
 
@@ -160,6 +158,15 @@ const DlMap = ({ setToast }) => {
 
   const selectOption = (opt) => {
     if (opt.property.kladr_id === 'manualInp') {
+      fetchAddress(value, 'books=cdi_clean', true)
+        .then((res) => {
+          const hasCity = res.data[0].property.components.find(i => i.kind === 'city');
+          if (hasCity) {
+            setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
+          } else {
+            setShowError('Требуется уточнение возможности перевозки и цены');
+          }
+        }).catch(err => console.log('ERROR: ', err));
       setManualInp(true);
       setOptions(null);
       return;

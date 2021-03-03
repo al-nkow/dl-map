@@ -198,7 +198,7 @@ const DlMap = ({ setToast }) => {
 
     fetchAddress(coords)
       .then(res => {
-        if (res && res.data) {
+        if (res && res.data && res.data[0]) {
           setValue(res.data[0].result);
           setPointAddress(res.data[0].result);
           checkAddress(res);

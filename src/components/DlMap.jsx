@@ -121,9 +121,9 @@ const DlMap = ({ setToast }) => {
   }
 
   const checkAddress = (res) => {
-    const hasCity = res.data[0].property.components.find(i => i.kind === 'city');
-    const hasHouse = res.data[0].property.components.find(i => i.kind === 'house');
-    const invalid = res.data[0].property.validity === 'UNOFFICIAL_SOURCE' || res.data[0].property.validity === 'VALIDATED_HAS_UNPARSED_PARTS';
+    const hasCity = res.data[0].components.find(i => i.kind === 'city');
+    const hasHouse = res.data[0].components.find(i => i.kind === 'house');
+    const invalid = res.data[0].validity === 'UNOFFICIAL_SOURCE' || res.data[0].validity === 'VALIDATED_HAS_UNPARSED_PARTS';
     
     if (invalid && hasCity) {
       setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
@@ -160,7 +160,7 @@ const DlMap = ({ setToast }) => {
     if (opt.property.kladr_id === 'manualInp') {
       fetchAddress(value, 'books=cdi_clean', true)
         .then((res) => {
-          const hasCity = res.data[0].property.components.find(i => i.kind === 'city');
+          const hasCity = res.data[0].components.find(i => i.kind === 'city');
           if (hasCity) {
             setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
           } else {
@@ -202,6 +202,9 @@ const DlMap = ({ setToast }) => {
           setValue(res.data[0].result);
           setPointAddress(res.data[0].result);
           checkAddress(res);
+        } else {
+          setValue('');
+          setPointAddress('');
         }
       })
       .catch(err => console.log('ERROR: ', err));

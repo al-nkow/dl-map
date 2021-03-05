@@ -120,15 +120,27 @@ const DlMap = ({ setToast }) => {
       .then(r => r.json())
   }
 
+  const standartize = (addr) => {
+    fetchAddress(addr, 'books=cdi_clean', true)
+      .then(res => {
+        const hasCity = res.data[0].components.find(i => i.kind === 'city');
+        const hasSettelment = res.data[0].components.find(i => i.kind === 'settelment');
+        if (hasCity || hasSettelment) {
+          const cityName = hasCity.name ? ` ${hasCity.name}` : '';
+          const settelmentName = hasSettelment.name ? ` ${hasSettelment.name}` : '';
+          setShowError(`Ваш населенный пункт${cityName}${settelmentName}. Цена перевозки ориентировочная`);
+        } else {
+          setShowError('Требуется уточнение возможности перевозки и цены');
+        }
+      })
+      .catch(err => console.log('ERROR: ', err));
+  }
+
   const checkAddress = (res) => {
-    const hasCity = res.data[0].components.find(i => i.kind === 'city');
     const hasHouse = res.data[0].components.find(i => i.kind === 'house');
-    const invalid = res.data[0].validity === 'UNOFFICIAL_SOURCE' || res.data[0].validity === 'VALIDATED_HAS_UNPARSED_PARTS';
-    
-    if (invalid && hasCity) {
-      setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
-    } else if (invalid && !hasCity) {
-      setShowError('Требуется уточнение возможности перевозки и цены');
+    const unofficial = res.data[0].books.includes('yandex_geo');
+    if (unofficial) {
+      standartize(res.data[0].result);
     } else if (!hasHouse) {
       setShowError('Не указан номер дома');
     }
@@ -158,15 +170,7 @@ const DlMap = ({ setToast }) => {
 
   const selectOption = (opt) => {
     if (opt.property.kladr_id === 'manualInp') {
-      fetchAddress(value, 'books=cdi_clean', true)
-        .then((res) => {
-          const hasCity = res.data[0].components.find(i => i.kind === 'city');
-          if (hasCity) {
-            setShowError(`Ваш населенный пункт ${hasCity.name}. Цена перевозки ориентировочная`);
-          } else {
-            setShowError('Требуется уточнение возможности перевозки и цены');
-          }
-        }).catch(err => console.log('ERROR: ', err));
+      standartize(value.result);
       setManualInp(true);
       setOptions(null);
       return;

@@ -170,7 +170,7 @@ const DlMap = ({ setToast }) => {
 
   const selectOption = (opt) => {
     if (opt.property.kladr_id === 'manualInp') {
-      standartize(value.result);
+      standartize(value);
       setManualInp(true);
       setOptions(null);
       return;
